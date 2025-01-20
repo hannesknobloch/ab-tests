@@ -18,18 +18,3 @@ variable "db_password" {
   description = "RDS database password"
   sensitive   = true
 }
-
-variable "vpc_arn" {
-  type        = string
-  description = "VPC ARN for all resources"
-}
-
-variable "subnet_ids" {
-  type        = list(string)
-  description = "Subnet IDs for the database"
-}
-
-variable "security_group_id" {
-  type        = string
-  description = "Security group ID for the database"
-}
