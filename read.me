@@ -1,0 +1,12 @@
+# TODO
+# implement 20 % rule
+# write readme
+# try removing pymysql library
+# credential handling
+# improve logging
+# terraform monitoring (?)
+
+# How to check if data was written to the local mysql database:
+docker exec -it local-rds mysql -u testuser -p
+USE testdb;
+SELECT * FROM ab_test_results;

@@ -1,6 +1,9 @@
 import json
 import pymysql
-import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # DB_HOST = os.environ["DB_HOST"]
 # DB_USER = os.environ["DB_USERNAME"]
@@ -47,11 +50,11 @@ def lambda_handler(event, context):
         store_result_in_db(result)
 
         # Log and return the best variant
-        print(f"Best variant stored in database: {result}")
+        logger.info(f"Best variant stored in database: {result}")
         return {"statusCode": 200, "body": json.dumps(result)}
 
     except Exception as e:
-        print(f"Error processing event: {e}")
+        logger.error(f"Error processing event: {e}")
         return {"statusCode": 500, "body": f"Error: {str(e)}"}
 
 
@@ -65,14 +68,14 @@ def store_result_in_db(result):
         with connection.cursor() as cursor:
             # Insert the result into the database
             query = """
-                INSERT INTO ab_test_results (variant_id, timestamp, test_id, views, clicks, ctr)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO ab_test_results (variant_id, test_id, views, clicks, ctr)
+                VALUES (%s, %s, %s, %s, %s)
             """
+            logger.info(f"Executing query: {query} with data: {result}")
             cursor.execute(
                 query,
                 (
                     result["id"],
-                    result["timestamp"],
                     result["test_id"],
                     result["views"],
                     result["clicks"],

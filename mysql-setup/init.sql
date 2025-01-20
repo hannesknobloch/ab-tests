@@ -1,7 +1,10 @@
 USE testdb;
 
-CREATE TABLE users (
+CREATE TABLE ab_test_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE
+    variant_id INT NOT NULL,
+    test_id VARCHAR(100) NOT NULL,
+    views INT,
+    clicks INT,
+    ctr DECIMAL(5,2)
 );

@@ -1,25 +1,6 @@
 # for local testing
 
 services:
-  ab-test-lambda:
-    build: .
-    ports:
-      - "8080:8080"
-
-  service-curl:
-    image: curlimages/curl:latest
-    depends_on:
-      - ab-test-lambda
-    entrypoint: [ "sh", "-c" ]
-    volumes:
-       - ./sample-requests:/data
-    command:
-      - |
-        echo "Sending test events...";
-        curl -X POST -d "@/data/request1.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
-        curl -X POST -d "@/data/request2.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
-        curl -X POST -d "@/data/request3.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
-
 
   rds-db:
     image: mysql:8.0
@@ -34,5 +15,36 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./mysql-setup:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=rootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ab-test-lambda:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      rds-db:
+        condition: service_healthy
+
+  service-curl:
+    image: curlimages/curl:latest
+    depends_on:
+      rds-db:
+        condition: service_healthy
+      ab-test-lambda:
+        condition: service_started
+    entrypoint: [ "sh", "-c" ]
+    volumes:
+       - ./sample-requests:/data
+    command:
+      - |
+        echo "Sending test events...";
+        curl -X POST -d "@/data/request1.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
+        curl -X POST -d "@/data/request2.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
+        curl -X POST -d "@/data/request3.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
+
 volumes:
   db_data:
