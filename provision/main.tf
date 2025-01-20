@@ -1,9 +1,9 @@
 resource "aws_sns_topic" "sns_topic" {
-  name = "ab-logger-sns"
+  name = "ab-test-sns"
 }
 
 resource "aws_db_instance" "db_instance" {
-  identifier        = "ab-logger-db"
+  identifier        = "ab-test-db"
   engine            = "mysql"
   instance_class    = "db.t3.micro"
   allocated_storage = 20
@@ -14,7 +14,7 @@ resource "aws_db_instance" "db_instance" {
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name = "ab-logger-lambda-role"
+  name = "ab-test-lambda-role"
  
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -31,7 +31,7 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name = "ab-logger-lambda-policy"
+  name = "ab-test-lambda-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -59,15 +59,15 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
 
 data "archive_file" "lambda_zip" {
    type        = "zip"
-   source_dir = "../lambda-resources"
-   output_path = "ab-logger-lambda-resources.zip"
+   source_dir = "../src"
+   output_path = "lambda_resources.zip"
  }
 
 resource "aws_lambda_function" "lambda_function" {
   filename         = data.archive_file.lambda_zip.output_path
-  function_name    = "ab-logger-lambda"
-  handler          = "ab-logger-lambda.handler" 
-  runtime          = "python3.10" 
+  function_name    = "app"
+  handler          = "app.lambda_handler" 
+  runtime          = "python3.12" 
   role             = aws_iam_role.lambda_role.arn
   source_code_hash = filebase64sha256(data.archive_file.lambda_zip.output_path)
 
