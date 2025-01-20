@@ -1,0 +1,21 @@
+# for local testing
+
+services:
+  ab-test-lambda:
+    build: .
+    ports:
+      - "8080:8080"
+
+  service-curl:
+    image: curlimages/curl:latest
+    depends_on:
+      - ab-test-lambda
+    entrypoint: [ "sh", "-c" ]
+    volumes:
+       - ./sample-requests:/data
+    command:
+      - |
+        echo "Sending test events...";
+        curl -X POST -d "@/data/request1.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
+        curl -X POST -d "@/data/request2.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
+        curl -X POST -d "@/data/request3.json" --url http://ab-test-lambda:8080/2015-03-31/functions/function/invocations -H "Content-Type: application/json"
