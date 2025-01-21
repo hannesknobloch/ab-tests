@@ -15,6 +15,8 @@ DB_USER = "testuser"
 DB_PASSWORD = "testpassword"
 DB_NAME = "testdb"
 
+CTR_MARGIN = 0.20  # 20% margin
+
 def lambda_handler(event, context):
     try:
         # Extract the SNS message
@@ -34,6 +36,29 @@ def lambda_handler(event, context):
             ),
         )
 
+        # Calculate the CTR of the best variant
+        best_ctr = (
+            (int(best_variant["clicks"]) / int(best_variant["views"])) * 100
+            if int(best_variant["views"]) > 0
+            else 0
+        )
+
+        # Check if the best variant's CTR is 20% better than all other variants
+        for variant in variants:
+            if variant != best_variant:
+                # Calculate CTR for this variant
+                ctr = (
+                    (int(variant["clicks"]) / int(variant["views"])) * 100
+                    if int(variant["views"]) > 0
+                    else 0
+                )
+                # Check if the best CTR is at least 20% better than this variant's CTR
+                if best_ctr <= ctr * (1 + CTR_MARGIN):
+                    logger.info(
+                        "No winner found: Best variant does not have 20% better CTR than all other variants."
+                    )
+                    return {"statusCode": 200, "body": "No winner found."}
+
         # Prepare the result
         result = {
             "id": best_variant["id"],
@@ -41,9 +66,7 @@ def lambda_handler(event, context):
             "test_id": test_id,
             "views": int(best_variant["views"]),
             "clicks": int(best_variant["clicks"]),
-            "ctr": round(
-                (int(best_variant["clicks"]) / int(best_variant["views"])) * 100, 2
-            ),
+            "ctr": round(best_ctr, 2),
         }
 
         # Store the result in the database

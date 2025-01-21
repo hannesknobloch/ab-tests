@@ -46,7 +46,7 @@ resource "aws_iam_policy" "lambda_policy" {
           "ec2:DeleteNetworkInterface"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = "*" # replace with log group and default vpc
       }
     ]
   })
