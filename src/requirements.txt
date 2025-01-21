@@ -1,2 +1,2 @@
-pymysql
+psycopg2-binary
 cryptography

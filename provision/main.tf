@@ -4,7 +4,7 @@ resource "aws_sns_topic" "sns_topic" {
 
 resource "aws_db_instance" "db_instance" {
   identifier        = "ab-test-db"
-  engine            = "mysql"
+  engine            = "postgres"
   instance_class    = "db.t3.micro"
   allocated_storage = 20
   username          = var.db_username

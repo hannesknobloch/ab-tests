@@ -1,5 +1,5 @@
 import json
-import pymysql
+import psycopg2
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -19,13 +19,11 @@ CTR_MARGIN = 0.20  # 20% margin
 
 def lambda_handler(event, context):
     try:
-        # Extract the SNS message
         sns_record = event["Records"][0]["Sns"]
         message = json.loads(sns_record["Message"])
 
         # Extract relevant fields
         test_id = message["test_id"]
-        msg_timestamp = message["msg_timestamp"]
         variants = message["variants"]
 
         # Find the variant with the best CTR
@@ -52,14 +50,13 @@ def lambda_handler(event, context):
                     if int(variant["views"]) > 0
                     else 0
                 )
-                # Check if the best CTR is at least 20% better than this variant's CTR
+                # Check if the best CTR is at least 20% better
                 if best_ctr <= ctr * (1 + CTR_MARGIN):
                     logger.info(
                         "No winner found: Best variant does not have 20% better CTR than all other variants."
                     )
                     return {"statusCode": 200, "body": "No winner found."}
 
-        # Prepare the result
         result = {
             "id": best_variant["id"],
             "test_id": test_id,
@@ -68,7 +65,6 @@ def lambda_handler(event, context):
             "ctr": round(best_ctr, 2),
         }
 
-        # Store the result in the database
         store_result_in_db(result)
 
         # Log and return the best variant
@@ -81,14 +77,12 @@ def lambda_handler(event, context):
 
 
 def store_result_in_db(result):
-    # Connect to the database
-    connection = pymysql.connect(
-        host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME
-    )
-
     try:
+        connection = psycopg2.connect(
+            host=DB_HOST, user=DB_USER, password=DB_PASSWORD, dbname=DB_NAME
+        )
+
         with connection.cursor() as cursor:
-            # Insert the result into the database
             query = """
                 INSERT INTO ab_test_results (variant_id, test_id, views, clicks, ctr)
                 VALUES (%s, %s, %s, %s, %s)
@@ -105,5 +99,8 @@ def store_result_in_db(result):
                 ),
             )
             connection.commit()
+    except Exception as e:
+        logger.error(f"Error inserting data into DB: {e}")
     finally:
-        connection.close()
+        if connection:
+            connection.close()

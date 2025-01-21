@@ -3,20 +3,19 @@
 services:
 
   rds-db:
-    image: mysql:8.0
+    image: postgres:13  
     container_name: local-rds
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: testdb
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpassword
+      POSTGRES_USER: testuser         
+      POSTGRES_PASSWORD: testpassword 
+      POSTGRES_DB: testdb             
     ports:
-      - "3306:3306"
+      - "5433:5432" 
     volumes:
-      - db_data:/var/lib/mysql
-      - ./mysql-setup:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+      - ./postgres-setup:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=rootpassword"]
+      test: ["CMD", "pg_isready", "-U", "testuser", "-d", "testdb", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 3

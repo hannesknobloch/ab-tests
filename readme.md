@@ -10,12 +10,11 @@ docker-compose up --build
 In the terminal log you can see if the data was received and passed on by the lambda function. To verify data was stored in the database, first connect to the database container with
 
 ```bash
-docker exec -it local-rds mysql -u testuser -p
+docker exec -it local-rds psql -U testuser -d testdb
 ```
 enter the password *testpassword*, then run 
 
 ```sql
-USE testdb;
 SELECT * FROM ab_test_results;
 ```
 to see all entries in the table.
@@ -58,7 +57,7 @@ The terraform set up creates three main components:
 If no clear winner is found in a test run, no data is stored.
 
 ### RDS Database
-This stores results in a mysql database with the above mentioned schema. 
+This stores results in a postgres database with the above mentioned schema. 
 
 # Test architecture
 
@@ -69,7 +68,7 @@ docker-compose up --build
  starts three containers:
  * curl invocations to mimick SNS messages
  * lambda function processing and sending messages to a database
- * mysql database to store results
+ * postgres database to store results
 
 The curl invocations and lambda function are slightly modified compared to the starting code. I added a health check, because I ran into race conditions where the curl messages were sent before the database was running. 
 
