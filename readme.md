@@ -6,10 +6,6 @@ To set up the local test environment run
 ```bash
 docker-compose up --build
 ```
-This starts three containers:
- * curl invocations to mimick SNS messages
- * lambda function processing and sending messages to a database
- * mysql database to store results
 
 In the terminal log you can see if the data was received and passed on by the lambda function. To verify data was stored in the database, first connect to the database container with
 
@@ -23,6 +19,12 @@ USE testdb;
 SELECT * FROM ab_test_results;
 ```
 to see all entries in the table.
+
+After testing end the container with cmd+c and run 
+```bash
+docker-compose down -v
+```
+to remove the containers and the attached data storage for a clean teardown.
 
 # Deploy to AWS
 To deploy this project to AWS use the terraform templates. Make sure you're in the *provision* directory, are logged in to an AWS account, 
@@ -58,9 +60,25 @@ If no clear winner is found in a test run, no data is stored.
 ### RDS Database
 This stores results in a mysql database with the above mentioned schema. 
 
+# Test architecture
+
+The command 
+```bash
+docker-compose up --build
+````
+ starts three containers:
+ * curl invocations to mimick SNS messages
+ * lambda function processing and sending messages to a database
+ * mysql database to store results
+
+The curl invocations and lambda function are slightly modified compared to the starting code. I added a health check, because I ran into race conditions where the curl messages were sent before the database was running. 
+
+The database is supposed to mimick an RDS setup in the cloud. It mounts a sql script as a volume and executes it on startup to create a table ready to store test data. If the volumes are not removed between local test runs, the data should persist.
 
 # TODO
 * 20 % rule code improvements
 * credential handling
 * improve logging
 * terraform monitoring
+* lock dependency versions
+* add unit tests for lambda code

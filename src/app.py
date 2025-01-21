@@ -21,14 +21,14 @@ def lambda_handler(event, context):
     try:
         # Extract the SNS message
         sns_record = event["Records"][0]["Sns"]
-        message = json.loads(sns_record["Message"])  # Parse the SNS message content
+        message = json.loads(sns_record["Message"])
 
         # Extract relevant fields
         test_id = message["test_id"]
         msg_timestamp = message["msg_timestamp"]
         variants = message["variants"]
 
-        # Find the variant with the best CTR using max()
+        # Find the variant with the best CTR
         best_variant = max(
             variants,
             key=lambda v: (
@@ -62,7 +62,6 @@ def lambda_handler(event, context):
         # Prepare the result
         result = {
             "id": best_variant["id"],
-            "timestamp": msg_timestamp,
             "test_id": test_id,
             "views": int(best_variant["views"]),
             "clicks": int(best_variant["clicks"]),
